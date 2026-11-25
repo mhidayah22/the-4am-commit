@@ -29,6 +29,9 @@ def main():
     if "\n" in MESSAGE or "\r" in MESSAGE:
         print("message must be a single line", file=sys.stderr)
         return 1
+    if MESSAGE != MESSAGE.strip():
+        print("message must not start or end with whitespace", file=sys.stderr)
+        return 1
     if not 1 <= len(MESSAGE) <= 200:
         print("message must be 1-200 characters", file=sys.stderr)
         return 1
@@ -37,12 +40,18 @@ def main():
     path = os.path.join(directory, "entry.txt")
     with open(path, "w", encoding="utf-8", newline="\n") as handle:
         handle.write(MESSAGE + "\n")
-    with open(path, "r", encoding="utf-8", newline="") as handle:
-        written = handle.read()
+    with open(path, "rb") as handle:
+        raw = handle.read()
+    try:
+        written = raw.decode("utf-8")
+    except UnicodeDecodeError:
+        print("entry.txt is not valid UTF-8", file=sys.stderr)
+        return 1
     if written != MESSAGE + "\n":
         print("round-trip verification failed", file=sys.stderr)
         return 1
-    print("wrote %d characters to %s" % (len(MESSAGE), path))
+    print("wrote %d characters (%d bytes) to %s"
+          % (len(MESSAGE), len(raw), path))
     return 0
 
 
